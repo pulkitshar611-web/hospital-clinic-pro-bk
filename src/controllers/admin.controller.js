@@ -100,6 +100,21 @@ const getAllDoctors = async (req, res) => {
     }
 };
 
+// Get all unique specializations
+const getSpecializations = async (req, res) => {
+    try {
+        const [specializations] = await db.query(
+            'SELECT DISTINCT specialization FROM doctors WHERE specialization IS NOT NULL AND specialization != "" ORDER BY specialization'
+        );
+
+        const list = specializations.map(s => s.specialization);
+        successResponse(res, list, 'Specializations fetched successfully');
+    } catch (error) {
+        console.error('Get Specializations Error:', error);
+        errorResponse(res, 'Failed to fetch specializations', 500, error.message);
+    }
+};
+
 // Add new doctor
 const addDoctor = async (req, res) => {
     try {
@@ -847,6 +862,7 @@ const getAllAppointments = async (req, res) => {
 module.exports = {
     getDashboardStats,
     getAllDoctors,
+    getSpecializations,
     addDoctor,
     updateDoctor,
     deleteDoctor,

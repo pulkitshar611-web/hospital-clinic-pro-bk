@@ -21,6 +21,8 @@ const storage = multer.diskStorage({
             folder = 'images';
         } else if (file.mimetype === 'application/pdf') {
             folder = 'documents';
+        } else if (file.mimetype.startsWith('video/')) {
+            folder = 'videos';
         }
 
         const destPath = path.join(uploadDir, folder);
@@ -41,18 +43,15 @@ const storage = multer.diskStorage({
 // File filter
 const fileFilter = (req, file, cb) => {
     // Allowed file types
-    const allowedTypes = [
-        'image/jpeg',
-        'image/png',
-        'image/gif',
-        'image/webp',
-        'application/pdf'
-    ];
-
-    if (allowedTypes.includes(file.mimetype)) {
+    // Allow images, PDFs, and common video formats
+    if (
+        file.mimetype.startsWith('image/') ||
+        file.mimetype === 'application/pdf' ||
+        file.mimetype.startsWith('video/')
+    ) {
         cb(null, true);
     } else {
-        cb(new Error('Invalid file type. Only images and PDFs are allowed.'), false);
+        cb(new Error('Invalid file type. Only images, PDFs, and videos are allowed.'), false);
     }
 };
 
@@ -61,7 +60,7 @@ const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: parseInt(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024 // 10MB default
+        fileSize: parseInt(process.env.MAX_FILE_SIZE) || 100 * 1024 * 1024 // 100MB default for videos
     }
 });
 

@@ -333,8 +333,12 @@ const getConsultationData = async (req, res) => {
                 doctor: h.doctor_name,
                 notes: {
                     chiefComplaints: h.chief_complaints,
+                    historyOfPresentingComplaints: h.history_of_presenting_complaints,
+                    currentSituation: h.current_situation,
+                    examination: h.examination,
+                    imagingFindings: h.imaging_findings,
                     diagnosis: h.diagnosis,
-                    treatmentPlan: h.treatment_plan
+                    opinionAndPlan: h.opinion_and_plan || h.treatment_plan
                 }
             })),
             existingConsultation: existingConsultation[0] || null,
@@ -365,11 +369,12 @@ const saveConsultation = async (req, res) => {
 
         const {
             chiefComplaints,
-            comorbidities,
+            historyOfPresentingComplaints,
+            currentSituation,
+            examination,
             imagingFindings,
             diagnosis,
-            treatmentPlan,
-            followUpNotes,
+            opinionAndPlan,
             vitals
         } = req.body;
 
@@ -412,20 +417,22 @@ const saveConsultation = async (req, res) => {
             await db.query(`
                 UPDATE consultations SET
                     chief_complaints = ?,
-                    comorbidities = ?,
+                    history_of_presenting_complaints = ?,
+                    current_situation = ?,
+                    examination = ?,
                     imaging_findings = ?,
                     diagnosis = ?,
-                    treatment_plan = ?,
-                    follow_up_notes = ?,
+                    opinion_and_plan = ?,
                     vitals = ?
                 WHERE id = ?
             `, [
                 chiefComplaints,
-                comorbidities,
+                historyOfPresentingComplaints,
+                currentSituation,
+                examination,
                 imagingFindings,
                 diagnosis,
-                treatmentPlan,
-                followUpNotes,
+                opinionAndPlan,
                 JSON.stringify(vitals),
                 existing[0].id
             ]);
@@ -435,20 +442,22 @@ const saveConsultation = async (req, res) => {
             const [result] = await db.query(`
                 INSERT INTO consultations
                 (appointment_id, patient_id, doctor_id, visit_number,
-                 chief_complaints, comorbidities, imaging_findings,
-                 diagnosis, treatment_plan, follow_up_notes, vitals)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 chief_complaints, history_of_presenting_complaints, 
+                 current_situation, examination, imaging_findings,
+                 diagnosis, opinion_and_plan, vitals)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
                 appointmentId,
                 patientId,
                 finalDoctorId,
                 visitNumber,
                 chiefComplaints,
-                comorbidities,
+                historyOfPresentingComplaints,
+                currentSituation,
+                examination,
                 imagingFindings,
                 diagnosis,
-                treatmentPlan,
-                followUpNotes,
+                opinionAndPlan,
                 JSON.stringify(vitals)
             ]);
             consultationId = result.insertId;
@@ -539,10 +548,21 @@ const uploadConsultationMedia = async (req, res) => {
         }
 
         // Determine correct file path based on file type (matches upload middleware)
-        const folder = req.file.mimetype.startsWith('image/') ? 'images' :
-            req.file.mimetype === 'application/pdf' ? 'documents' : 'others';
+        let folder = 'others';
+        let fileType = 'OTHER';
+
+        if (req.file.mimetype.startsWith('image/')) {
+            folder = 'images';
+            fileType = 'IMAGE';
+        } else if (req.file.mimetype === 'application/pdf') {
+            folder = 'documents';
+            fileType = 'PDF';
+        } else if (req.file.mimetype.startsWith('video/')) {
+            folder = 'videos'; // Ensure this folder exists or use 'others' if you prefer
+            fileType = 'VIDEO';
+        }
+
         const fileUrl = `/uploads/${folder}/${req.file.filename}`;
-        const fileType = req.file.mimetype.includes('pdf') ? 'PDF' : 'IMAGE';
 
         const [result] = await db.query(`
             INSERT INTO consultation_media
@@ -1395,11 +1415,14 @@ const getPrintData = async (req, res) => {
             time: consultation.appointment_time,
             fee: consultation.fee,
             consultation: {
-                symptoms: consultation.symptoms,
+                chiefComplaints: consultation.chief_complaints,
+                historyOfPresentingComplaints: consultation.history_of_presenting_complaints,
+                currentSituation: consultation.current_situation,
+                examination: consultation.examination,
+                imagingFindings: consultation.imaging_findings,
                 diagnosis: consultation.diagnosis,
-                prescription: consultation.prescription,
-                advice: consultation.advice,
-                follow_up_date: consultation.follow_up_date
+                opinionAndPlan: consultation.opinion_and_plan,
+                treatmentPlan: consultation.treatment_plan // Including legacy field just in case
             }
         }, 'Print data fetched successfully');
 

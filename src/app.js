@@ -11,16 +11,7 @@ const app = express();
 // ====================================
 // MIDDLEWARE
 // ====================================
-app.use(
-    cors({
-      origin: [
-        process.env.FRONTEND_URL,
-        "http://localhost:3000",
-       "https://clinic-pro-new.netlify.app"
-      ],
-      credentials: true
-    })
-  );
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

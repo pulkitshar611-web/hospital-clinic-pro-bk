@@ -17,6 +17,7 @@ router.get('/dashboard/stats', adminController.getDashboardStats);
 
 // Doctor Management
 router.get('/doctors', adminController.getAllDoctors);
+router.get('/doctors/specializations', adminController.getSpecializations); // Add this line
 router.post('/doctors', adminController.addDoctor);
 router.put('/doctors/:id', adminController.updateDoctor);
 router.delete('/doctors/:id', adminController.deleteDoctor);
